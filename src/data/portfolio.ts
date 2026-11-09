@@ -229,7 +229,7 @@ export const projects: Project[] = [
         ],
         technologies: ["React.js", "Node.js", "Express.js", "MongoDB", "Python Flask", "Java Swing"],
         githubUrl: "https://github.com/nandhu0424/drug-to-drug-interactions",
-        liveUrl: "#",
+        liveUrl: "https://drug-frontend.onrender.com/",
         image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?q=80&w=600&auto=format&fit=crop",
         status: "completed",
         isFeatured: true,
