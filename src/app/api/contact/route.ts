@@ -145,45 +145,7 @@ Reply directly to ${trimmedEmail}`;
         const emailjsPublicKey = process.env.EMAILJS_PUBLIC_KEY;
         const emailjsPrivateKey = process.env.EMAILJS_PRIVATE_KEY;
 
-        // Provider A: Google Account App Password (Gmail SMTP)
-        if (gmailAppPassword) {
-            try {
-                const transporter = nodemailer.createTransport({
-                    service: "gmail",
-                    auth: {
-                        user: gmailUser,
-                        pass: gmailAppPassword.replace(/\s+/g, ""),
-                    },
-                });
-
-                await transporter.sendMail({
-                    from: `"Portfolio Contact Form" <${gmailUser}>`,
-                    to: recipientEmail,
-                    replyTo: trimmedEmail,
-                    subject: `[Portfolio Contact] ${trimmedSubject} - from ${trimmedName}`,
-                    html: emailHtml,
-                    text: emailText,
-                });
-
-                return Response.json({
-                    success: true,
-                    message: "Email sent successfully via Gmail SMTP.",
-                });
-            } catch (smtpErr: any) {
-                console.error("Gmail SMTP error:", smtpErr);
-                return Response.json(
-                    {
-                        success: false,
-                        error:
-                            smtpErr?.message ||
-                            "Failed to deliver email through Gmail. Please verify your Google App Password.",
-                    },
-                    { status: 502 }
-                );
-            }
-        }
-
-        // Provider B: Resend API
+        // Provider A: Resend API (Fastest & recommended for cloud hosts like Render/Vercel)
         if (resendApiKey) {
             const resendRes = await fetch("https://api.resend.com/emails", {
                 method: "POST",
@@ -217,6 +179,47 @@ Reply directly to ${trimmedEmail}`;
                 success: true,
                 message: "Email sent successfully via Resend.",
             });
+        }
+
+        // Provider B: Google Account App Password (Gmail SMTP)
+        if (gmailAppPassword) {
+            try {
+                const transporter = nodemailer.createTransport({
+                    service: "gmail",
+                    auth: {
+                        user: gmailUser,
+                        pass: gmailAppPassword.replace(/\s+/g, ""),
+                    },
+                    connectionTimeout: 8000, // 8 seconds timeout
+                    greetingTimeout: 8000,
+                    socketTimeout: 8000,
+                });
+
+                await transporter.sendMail({
+                    from: `"Portfolio Contact Form" <${gmailUser}>`,
+                    to: recipientEmail,
+                    replyTo: trimmedEmail,
+                    subject: `[Portfolio Contact] ${trimmedSubject} - from ${trimmedName}`,
+                    html: emailHtml,
+                    text: emailText,
+                });
+
+                return Response.json({
+                    success: true,
+                    message: "Email sent successfully via Gmail SMTP.",
+                });
+            } catch (smtpErr: any) {
+                console.error("Gmail SMTP error:", smtpErr);
+                return Response.json(
+                    {
+                        success: false,
+                        error:
+                            smtpErr?.message ||
+                            "Failed to deliver email through Gmail SMTP. (Note: Render free tier blocks SMTP ports; please use RESEND_API_KEY).",
+                    },
+                    { status: 502 }
+                );
+            }
         }
 
         // Provider C: EmailJS REST API
