@@ -1,3 +1,5 @@
+import nodemailer from "nodemailer";
+
 // Utility function to escape HTML special characters for email security
 function escapeHtml(str: string): string {
     return str
@@ -135,13 +137,53 @@ ${trimmedMessage}
 Reply directly to ${trimmedEmail}`;
 
         // 3. Dispatch via configured email provider
+        const gmailUser = process.env.GMAIL_USER || recipientEmail;
+        const gmailAppPassword = process.env.GMAIL_APP_PASSWORD || process.env.EMAIL_PASS;
+        const resendApiKey = process.env.RESEND_API_KEY;
         const emailjsServiceId = process.env.EMAILJS_SERVICE_ID;
         const emailjsTemplateId = process.env.EMAILJS_TEMPLATE_ID;
         const emailjsPublicKey = process.env.EMAILJS_PUBLIC_KEY;
         const emailjsPrivateKey = process.env.EMAILJS_PRIVATE_KEY;
-        const resendApiKey = process.env.RESEND_API_KEY;
 
-        // Provider A: Resend API
+        // Provider A: Google Account App Password (Gmail SMTP)
+        if (gmailAppPassword) {
+            try {
+                const transporter = nodemailer.createTransport({
+                    service: "gmail",
+                    auth: {
+                        user: gmailUser,
+                        pass: gmailAppPassword.replace(/\s+/g, ""),
+                    },
+                });
+
+                await transporter.sendMail({
+                    from: `"Portfolio Contact Form" <${gmailUser}>`,
+                    to: recipientEmail,
+                    replyTo: trimmedEmail,
+                    subject: `[Portfolio Contact] ${trimmedSubject} - from ${trimmedName}`,
+                    html: emailHtml,
+                    text: emailText,
+                });
+
+                return Response.json({
+                    success: true,
+                    message: "Email sent successfully via Gmail SMTP.",
+                });
+            } catch (smtpErr: any) {
+                console.error("Gmail SMTP error:", smtpErr);
+                return Response.json(
+                    {
+                        success: false,
+                        error:
+                            smtpErr?.message ||
+                            "Failed to deliver email through Gmail. Please verify your Google App Password.",
+                    },
+                    { status: 502 }
+                );
+            }
+        }
+
+        // Provider B: Resend API
         if (resendApiKey) {
             const resendRes = await fetch("https://api.resend.com/emails", {
                 method: "POST",
@@ -177,7 +219,7 @@ Reply directly to ${trimmedEmail}`;
             });
         }
 
-        // Provider B: EmailJS REST API
+        // Provider C: EmailJS REST API
         if (emailjsServiceId && emailjsTemplateId && emailjsPublicKey) {
             const emailjsPayload: Record<string, any> = {
                 service_id: emailjsServiceId,
@@ -225,16 +267,16 @@ Reply directly to ${trimmedEmail}`;
             });
         }
 
-        // Provider C: Neither configured yet (inform developer in development)
+        // Provider D: None configured yet (inform developer)
         console.warn(
-            "Contact form submitted, but no email provider is configured. Please set EMAILJS_* or RESEND_API_KEY in .env.local."
+            "Contact form submitted, but no email provider is configured. Please set GMAIL_APP_PASSWORD, RESEND_API_KEY, or EMAILJS_* in .env.local."
         );
         return Response.json(
             {
                 success: false,
                 notConfigured: true,
                 error:
-                    "Email service is not yet configured. Please add EMAILJS credentials or RESEND_API_KEY to your .env.local file.",
+                    "Email service is not yet configured. Please add GMAIL_APP_PASSWORD (or RESEND_API_KEY / EMAILJS) in your environment variables.",
             },
             { status: 503 }
         );
@@ -249,4 +291,3 @@ Reply directly to ${trimmedEmail}`;
         );
     }
 }
-
