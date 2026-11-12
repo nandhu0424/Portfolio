@@ -204,7 +204,7 @@ export const projects: Project[] = [
         ],
         technologies: ["React", "Node.js", "Express.js", "MongoDB"],
         githubUrl: "https://github.com/nandhu0424/lifeline360",
-        liveUrl: "#",
+        liveUrl: "https://lifeline360-frontend.onrender.com",
         image: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=600&auto=format&fit=crop",
         isFeatured: true,
         status: "completed",
