@@ -254,7 +254,7 @@ export const projects: Project[] = [
         ],
         technologies: ["Flutter", "React.js", "Flask", "MongoDB", "SQLite", "JWT"],
         githubUrl: "https://github.com/nandhu0424/offline-first-library-management-system",
-        liveUrl: "#",
+        liveUrl: "https://offline-first-library-management-sy.vercel.app",
         image: "https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=600&auto=format&fit=crop",
         status: "completed",
     },
